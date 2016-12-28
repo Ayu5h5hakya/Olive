@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/id_sethome"
+        android:text="Set as home"
+        android:padding="10dp"
+        android:clickable="true"
+        android:onClick="setAsHome"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/id_calc_dist"
+        android:text="Calculate distance"
+        android:padding="10dp"
+        android:clickable="true"
+        android:onClick="computeDistance"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/id_details"
+        android:text="Details"
+        android:padding="10dp"
+        android:onClick="showDetails"/>
+
+</LinearLayout>
