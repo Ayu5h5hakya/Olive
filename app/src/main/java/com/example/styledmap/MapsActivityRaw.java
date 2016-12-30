@@ -1,9 +1,12 @@
 package com.example.styledmap;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -31,6 +34,8 @@ import io.realm.RealmResults;
  */
 public class MapsActivityRaw extends AppCompatActivity
         implements OnMapReadyCallback{
+
+    private static final int CAMERA_REQUEST=800;
 
     MarkerOptions markeroptions;
     ArrayList<LatLng> latlangArray;
@@ -88,8 +93,6 @@ public class MapsActivityRaw extends AppCompatActivity
 
         googleMap.setMyLocationEnabled(true);
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
-        googleMap.setInfoWindowAdapter(new CustomInfoWindowAdapter(getLayoutInflater().inflate(R.layout.layout_custom_window,null)));
-
 
         RealmResults<Event> results = realm.where(Event.class).findAll();
         for(Event event : results) googleMap.addMarker(markeroptions.position(new LatLng(event.getPosition_lat(),event.getPosition_lang())));
@@ -101,7 +104,7 @@ public class MapsActivityRaw extends AppCompatActivity
             @Override
             public void onMapClick(LatLng latLng) {
                 Log.d("witcher", "onMapClick: ");
-                googleMap.addMarker(markeroptions.position(latLng));
+                googleMap.addMarker(markeroptions.position(latLng).title("testing"));
                 latlangArray.add(latLng);
                 fab.setVisibility(View.VISIBLE);
             }
@@ -128,7 +131,9 @@ public class MapsActivityRaw extends AppCompatActivity
         googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-
+                Log.d("witcher", "onMarkerClick: ");
+                Intent intent = new Intent(MapsActivityRaw.this,LocationphotoActivity.class);
+                startActivity(intent);
                 return false;
             }
         });
