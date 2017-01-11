@@ -45,7 +45,7 @@ public class CustomMap extends SupportMapFragment implements GoogleApiClient.Con
 
     @Override
     public void onMapClick(LatLng latLng) {
-
+        Log.d("witcher", "onMapClick: ");
     }
 
     @Override

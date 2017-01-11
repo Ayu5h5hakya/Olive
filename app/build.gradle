@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.0"
+    buildToolsVersion '25.0.1'
     defaultConfig {
         applicationId "com.example.styledmap"
-        minSdkVersion 16
+        minSdkVersion 23
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
@@ -39,4 +39,6 @@ dependencies {
     compile 'com.uphyca:stetho_realm:2.0.0'
     compile 'io.realm:realm-android:0.84.1'
     testCompile 'junit:junit:4.12'
+    compile 'com.github.hotchemi:permissionsdispatcher:2.3.1'
+    annotationProcessor 'com.github.hotchemi:permissionsdispatcher-processor:2.3.1'
 }

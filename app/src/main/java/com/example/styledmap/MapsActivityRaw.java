@@ -1,14 +1,19 @@
 package com.example.styledmap;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -23,17 +28,21 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.security.Permission;
 import java.util.ArrayList;
 
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import io.realm.RealmResults;
+import permissions.dispatcher.NeedsPermission;
+import permissions.dispatcher.RuntimePermissions;
 
 /**
  * A styled map using JSON styles from a raw resource.
  */
-public class MapsActivityRaw extends AppCompatActivity
-        implements OnMapReadyCallback{
+
+@RuntimePermissions
+public class MapsActivityRaw extends AppCompatActivity implements OnMapReadyCallback{
 
     private static final int CAMERA_REQUEST=800;
 
@@ -42,6 +51,7 @@ public class MapsActivityRaw extends AppCompatActivity
     Olive myApplication;
     Realm realm;
     FloatingActionButton fab;
+    GoogleMap googleMap;
 
     private static final String TAG = MapsActivityRaw.class.getSimpleName();
 
@@ -64,11 +74,10 @@ public class MapsActivityRaw extends AppCompatActivity
         myApplication = (Olive) getApplicationContext();
         realm = myApplication.getRealmInstance();
 
+
         fab = (FloatingActionButton) findViewById(R.id.id_download);
         if(latlangArray.size()!=0) fab.setVisibility(View.VISIBLE);
         else fab.setVisibility(View.INVISIBLE);
-
-
     }
 
     /**
@@ -78,21 +87,16 @@ public class MapsActivityRaw extends AppCompatActivity
     @Override
     public void onMapReady(final GoogleMap googleMap) {
 
+        this.googleMap = googleMap;
         realm = myApplication.getRealmInstance();
 
         //custom style for the map
         setDarkMode(googleMap);
 
+        MapsActivityRawPermissionsDispatcher.showClientLocationWithCheck(this);
+
         // Position the map's camera near Kathmandu,Nepal.
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(27.7172, 85.3240)));
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-
-        googleMap.setMyLocationEnabled(true);
-        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
 
         RealmResults<Event> results = realm.where(Event.class).findAll();
         for(Event event : results) googleMap.addMarker(markeroptions.position(new LatLng(event.getPosition_lat(),event.getPosition_lang())));
@@ -103,8 +107,7 @@ public class MapsActivityRaw extends AppCompatActivity
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                Log.d("witcher", "onMapClick: ");
-                googleMap.addMarker(markeroptions.position(latLng).title("testing"));
+                googleMap.addMarker(markeroptions.position(latLng).title("test location"));
                 latlangArray.add(latLng);
                 fab.setVisibility(View.VISIBLE);
             }
@@ -113,7 +116,6 @@ public class MapsActivityRaw extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d("witcher", "onClick: downloading all locations");
                 for (LatLng latlang_elem : latlangArray){
                     realm.beginTransaction();
                         Event event = realm.createObject(Event.class);
@@ -131,7 +133,6 @@ public class MapsActivityRaw extends AppCompatActivity
         googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                Log.d("witcher", "onMarkerClick: ");
                 Intent intent = new Intent(MapsActivityRaw.this,LocationphotoActivity.class);
                 startActivity(intent);
                 return false;
@@ -159,4 +160,15 @@ public class MapsActivityRaw extends AppCompatActivity
         return realm.where(Event.class).max("id").intValue()+1;
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        MapsActivityRawPermissionsDispatcher.onRequestPermissionsResult(this,requestCode,grantResults);
+    }
+
+    @NeedsPermission({Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION})
+    void showClientLocation(){
+        googleMap.setMyLocationEnabled(true);
+        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
+    }
 }
