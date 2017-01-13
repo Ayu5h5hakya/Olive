@@ -11,6 +11,7 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
 import android.widget.ImageView;
 
 import java.io.File;
@@ -34,9 +35,7 @@ public class LocationphotoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_locationphoto);
         imageView = (ImageView) findViewById(R.id.id_photo);
-        mediaStorageDirectory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Olive pictures");
         LocationphotoActivityPermissionsDispatcher.takeLocationPhotoWithCheck(this);
-
     }
 
     @Override
@@ -44,7 +43,10 @@ public class LocationphotoActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK)
         {
-            LocationphotoActivityPermissionsDispatcher.accessFileSystemWithCheck(this);
+            DisplayMetrics metrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(metrics);
+            int wwidth = metrics.widthPixels;
+            imageView.setImageBitmap(decodeSampledBitmapFromResource(photoFile.getAbsolutePath(),wwidth,500));
         }
 
     }
@@ -69,16 +71,44 @@ public class LocationphotoActivity extends AppCompatActivity {
         return photoFile;
     }
 
-    @NeedsPermission({Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE})
-    public void takeStorePhoto(){
-        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+    @NeedsPermission({Manifest.permission.CAMERA,
+                      Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                      Manifest.permission.READ_EXTERNAL_STORAGE})
+    void takeLocationPhoto()
+    {
+        mediaStorageDirectory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Olive pictures");
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         intent.putExtra(MediaStore.EXTRA_OUTPUT,getOutputMediaFileUri());
         startActivityForResult(intent,CAMERA_REQUEST);
-        imageView.setImageBitmap(BitmapFactory.decodeFile(photoFile.getAbsolutePath()));
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         LocationphotoActivityPermissionsDispatcher.onRequestPermissionsResult(this,requestCode,grantResults);
+    }
+
+    public static int calculateInSampleSize(BitmapFactory.Options options,int reqWidth,int reqHeight)
+    {
+        final int imageWidth = options.outWidth;
+        final int imageHeight = options.outHeight;
+        int inSampleSize = 1;
+        if (imageHeight > reqHeight || imageWidth > reqWidth)
+        {
+            final int halfHeight = imageHeight/2;
+            final int halfWidth = imageWidth/2;
+            while ((halfHeight/inSampleSize) >=reqHeight && (halfWidth/inSampleSize) >=reqWidth) inSampleSize*=2;
+        }
+        return inSampleSize;
+    }
+
+    public Bitmap decodeSampledBitmapFromResource(String imagePath,int reqHeight,int reqWidth)
+    {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(imagePath,options);
+        options.inSampleSize = calculateInSampleSize(options,reqWidth,reqHeight);
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(imagePath,options);
     }
 }
