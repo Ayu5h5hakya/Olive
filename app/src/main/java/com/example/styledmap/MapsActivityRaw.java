@@ -20,6 +20,8 @@ import android.view.View;
 
 import com.example.styledmap.Adapter.CustomInfoWindowAdapter;
 import com.example.styledmap.Models.Event;
+import com.example.styledmap.Utils.Constant;
+import com.example.styledmap.Utils.RealmEngine;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -52,6 +54,7 @@ public class MapsActivityRaw extends AppCompatActivity implements OnMapReadyCall
     Realm realm;
     FloatingActionButton fab;
     GoogleMap googleMap;
+    RealmEngine realmEngine = null;
 
     private static final String TAG = MapsActivityRaw.class.getSimpleName();
 
@@ -63,8 +66,7 @@ public class MapsActivityRaw extends AppCompatActivity implements OnMapReadyCall
 
         // Get the SupportMapFragment and register for the callback
         // when the map is ready for use.
-        CustomMap mapFragment = (CustomMap) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+        CustomMap mapFragment = (CustomMap) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         markeroptions = new MarkerOptions();
@@ -72,7 +74,7 @@ public class MapsActivityRaw extends AppCompatActivity implements OnMapReadyCall
         latlangArray = new ArrayList<>();
 
         myApplication = (Olive) getApplicationContext();
-        realm = myApplication.getRealmInstance();
+        realmEngine = RealmEngine.getRealmInstance(this);
 
 
         fab = (FloatingActionButton) findViewById(R.id.id_download);
@@ -88,7 +90,6 @@ public class MapsActivityRaw extends AppCompatActivity implements OnMapReadyCall
     public void onMapReady(final GoogleMap googleMap) {
 
         this.googleMap = googleMap;
-        realm = myApplication.getRealmInstance();
 
         //custom style for the map
         setDarkMode(googleMap);
@@ -98,8 +99,8 @@ public class MapsActivityRaw extends AppCompatActivity implements OnMapReadyCall
         // Position the map's camera near Kathmandu,Nepal.
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(27.7172, 85.3240)));
 
-        RealmResults<Event> results = realm.where(Event.class).findAll();
-        for(Event event : results) googleMap.addMarker(markeroptions.position(new LatLng(event.getPosition_lat(),event.getPosition_lang())));
+        ArrayList<LatLng> results = realmEngine.getAllMarkers();
+        for(LatLng event : results) googleMap.addMarker(markeroptions.position(event));
 
         /**
          * callbacks for map interaction
@@ -116,14 +117,7 @@ public class MapsActivityRaw extends AppCompatActivity implements OnMapReadyCall
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                for (LatLng latlang_elem : latlangArray){
-                    realm.beginTransaction();
-                        Event event = realm.createObject(Event.class);
-                        event.setId(next_key());
-                        event.setPosition_lat(latlang_elem.latitude);
-                        event.setPosition_lang(latlang_elem.longitude);
-                    realm.commitTransaction();
-                }
+                for (LatLng latlang_elem : latlangArray) realmEngine.addEvent(latlang_elem);
 
                 latlangArray.clear();
                 fab.setVisibility(View.INVISIBLE);
@@ -134,6 +128,8 @@ public class MapsActivityRaw extends AppCompatActivity implements OnMapReadyCall
             @Override
             public boolean onMarkerClick(Marker marker) {
                 Intent intent = new Intent(MapsActivityRaw.this,LocationphotoActivity.class);
+                int marker_ID = realmEngine.containsMarker(marker);
+                if (marker_ID!=-1) intent.putExtra(Constant.EVENT_ID_KEY,marker_ID);
                 startActivity(intent);
                 return false;
             }
@@ -156,9 +152,6 @@ public class MapsActivityRaw extends AppCompatActivity implements OnMapReadyCall
         }
     }
 
-    private int next_key(){
-        return realm.where(Event.class).max("id").intValue()+1;
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

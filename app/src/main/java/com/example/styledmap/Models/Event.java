@@ -36,5 +36,4 @@ public class Event extends RealmObject{
         this.position_lang = position_lang;
     }
 
-
 }

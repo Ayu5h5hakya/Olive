@@ -16,7 +16,6 @@ import io.realm.RealmConfiguration;
 
 public class Olive extends Application {
 
-    Realm realm;
     @Override
     public void onCreate() {
         super.onCreate();
@@ -27,13 +26,5 @@ public class Olive extends Application {
                         .enableDumpapp(Stetho.defaultDumperPluginsProvider(this))
                         .enableWebKitInspector(RealmInspectorModulesProvider.builder(this).build())
                         .build());
-
-        realm = Realm.getInstance(
-                new RealmConfiguration.Builder(getApplicationContext())
-                        .name("myOtherRealm.realm")
-                        .build()
-        );
     }
-
-    Realm getRealmInstance() {return realm;}
 }

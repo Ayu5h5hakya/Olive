@@ -21,6 +21,9 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.example.styledmap.Utils.Constant;
+import com.example.styledmap.Utils.RealmEngine;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -38,22 +41,25 @@ public class LocationphotoActivity extends AppCompatActivity
     ImageView imageView;
     private int CAMERA_REQUEST = 800;
     File mediaStorageDirectory,photoFile;
-    //EditText location_description;
+    EditText location_description;
     AppBarLayout appBarLayout;
     private int mMaxScrollSize;
     FloatingActionButton fab;
     boolean isHidden;
+    RealmEngine realmEngine = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_locationphoto);
         imageView = (ImageView) findViewById(R.id.id_photo);
-        //location_description = (EditText) findViewById(R.id.location_description);
+        location_description = (EditText) findViewById(R.id.location_description);
         appBarLayout = (AppBarLayout) findViewById(R.id.id_appbar);
         fab = (FloatingActionButton) findViewById(R.id.id_fab);
-
         Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar);
+        realmEngine = RealmEngine.getRealmInstance(this);
+
+        final int event_ID = getIntent().getIntExtra(Constant.EVENT_ID_KEY,-1);
         setSupportActionBar(toolbar);
         toolbar.setPadding(0,getStatusbarheight(),0,0);
         LocationphotoActivityPermissionsDispatcher.takeLocationPhotoWithCheck(this);
@@ -63,7 +69,7 @@ public class LocationphotoActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d("witcher", "onClick: save description into the database");
+                realmEngine.addPhoto(event_ID,photoFile.getAbsolutePath());
             }
         });
     }
