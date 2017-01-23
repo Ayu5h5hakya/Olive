@@ -40,7 +40,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".LocationphotoActivity"
-            android:label="@string/title_activity_maps">
+            android:label="@string/title_activity_maps"
+            android:theme="@style/TransparentTheme">
             <intent-filter>
                 <action android:name="com.example.styledmap.locationphoto" />
 

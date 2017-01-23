@@ -10,8 +10,15 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 
 import java.io.File;
@@ -25,17 +32,40 @@ import permissions.dispatcher.RuntimePermissions;
  * Created by ayush on 12/30/16.
  */
 @RuntimePermissions
-public class LocationphotoActivity extends AppCompatActivity {
+public class LocationphotoActivity extends AppCompatActivity
+                                   implements AppBarLayout.OnOffsetChangedListener{
 
     ImageView imageView;
     private int CAMERA_REQUEST = 800;
     File mediaStorageDirectory,photoFile;
+    //EditText location_description;
+    AppBarLayout appBarLayout;
+    private int mMaxScrollSize;
+    FloatingActionButton fab;
+    boolean isHidden;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_locationphoto);
         imageView = (ImageView) findViewById(R.id.id_photo);
+        //location_description = (EditText) findViewById(R.id.location_description);
+        appBarLayout = (AppBarLayout) findViewById(R.id.id_appbar);
+        fab = (FloatingActionButton) findViewById(R.id.id_fab);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setPadding(0,getStatusbarheight(),0,0);
         LocationphotoActivityPermissionsDispatcher.takeLocationPhotoWithCheck(this);
+
+        appBarLayout.addOnOffsetChangedListener(this);
+
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d("witcher", "onClick: save description into the database");
+            }
+        });
     }
 
     @Override
@@ -110,5 +140,37 @@ public class LocationphotoActivity extends AppCompatActivity {
         options.inSampleSize = calculateInSampleSize(options,reqWidth,reqHeight);
         options.inJustDecodeBounds = false;
         return BitmapFactory.decodeFile(imagePath,options);
+    }
+
+    private int getStatusbarheight()
+    {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height","dimen","android");
+        if(resourceId > 0) result = getResources().getDimensionPixelSize(resourceId);
+        return result;
+    }
+
+    @Override
+    public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+
+        if (mMaxScrollSize == 0) mMaxScrollSize = appBarLayout.getTotalScrollRange();
+
+        int currentScrollPercentage = Math.abs(verticalOffset)*100/mMaxScrollSize;
+
+        if (currentScrollPercentage>=20)
+        {
+            if (!isHidden){
+                isHidden = true;
+                ViewCompat.animate(fab).scaleX(0).scaleY(0).start();
+            }
+        }
+
+        if (currentScrollPercentage<20)
+        {
+            if (isHidden){
+                isHidden = false;
+                ViewCompat.animate(fab).scaleX(1).scaleY(1).start();
+            }
+        }
     }
 }
